@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>My Homepage</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f7f7f7;
+        margin: 0;
+        padding: 0;
+      }
+      
+      header {
+        background-color: #333;
+        color: white;
+        padding: 20px;
+        text-align: center;
+      }
+      
+      h1 {
+        margin-top: 0;
+      }
+      
+      form {
+        max-width: 500px;
+        margin: 0 auto;
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0px 0px 10px #aaa;
+      }
+      
+      label {
+        display: block;
+        margin-bottom: 10px;
+        font-weight: bold;
+      }
+      
+      input[type="file"] {
+        display: block;
+        margin-bottom: 20px;
+      }
+      
+      input[type="checkbox"] {
+        margin-right: 10px;
+      }
+      
+      input[type="submit"] {
+        background-color: #333;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+        margin-top: 20px;
+      }
+      
+      input[type="submit"]:hover {
+        background-color: #555;
+      }
+      
+      #orig-image-preview {
+        max-width: 50px;
+        max-width: 50px;
+        margin-top: 20px;
+      }
+
+      #gen-image-preview {
+        max-width: 50px;
+        margin-top: 20px;
+      }
+
+      .container {
+        display: flex;
+      }
+
+      .image-container {
+        flex: 1;
+      }
+
+      .custom-form {
+        max-width: 900px; /* Adjust the width value as needed */
+      }
+
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Plantum:</h1>
+    </header>
+    
+    <form class="custom-form">
+      <div class="container">
+        <div id="image-container1" class="image-container">
+          <label for="image">Upload your space image:</label>
+          <input type="file" id="image" name="image" onchange="previewImage()">
+          <div id="orig-image-preview"></div>
+          <br>
+          <input type="button" value = 'submit' onclick="callAPI()">
+        </div>
+        <div id="image-container2" class="image-container">
+          <label for="image">Your Plantum: space looks like!</label>
+          <br>
+          <div id="gen-image-preview"></div>
+        </div>
+      </div>
+      <br>
+      <br>
+      <br>
+      <label for="choices">How close are you to plants?</label>
+      <br>
+      <input list="userlevel" id="userlevel-input">
+      <datalist id="userlevel">
+        <option value="I am Groot! (Advanced)">
+        <option value="I am good. (Intermediate)">
+        <option value="... (Basic)">
+      </datalist>
+    </form>
+    
+    <script>
+      // SET global variables
+      var URL = "https://f2nch6etib.execute-api.us-east-1.amazonaws.com/dev";
+      var origin_image = new Image();
+      var origin_image_rawdata = '';
+      var update_image = new Image();
+      var update_image_rawdata = '';
+
+      function previewImage() {
+        // define the object
+        var preview = document.querySelector('#orig-image-preview');
+        var file = document.querySelector('#image').files[0];
+        var reader = new FileReader();
+        
+        // define the event listener function. It will be exectued when a file has been read successfully.
+        reader.addEventListener("load", function () {
+          origin_image_rawdata = reader.result
+          origin_image.src = origin_image_rawdata;
+          origin_image.style = "width:300px";
+          preview.innerHTML = '';
+          preview.appendChild(origin_image);
+        }, false);
+
+        // read the contents of the file as base64 format.
+        if (file) {
+          reader.readAsDataURL(file);
+        }
+      }
+
+      function callAPI (){
+            // instantiate a headers object
+            var myHeaders = new Headers();
+            var preview = document.querySelector('#gen-image-preview');
+            // add content type header to object
+            myHeaders.append("Content-Type", "application/json");
+            // using built in JSON utility package turn object to string and store in a variable
+            var raw = JSON.stringify({"origImageRawData":origin_image_rawdata.split('data:image/jpeg;base64,')[1]
+                                      , "userLevel":document.getElementById('userlevel-input').value});
+            // create a JSON object with parameters for API call and store in a variable
+            var requestOptions = {
+                method: 'POST',
+                headers: myHeaders,
+                body: raw,
+                redirect: 'follow',
+                // mode: 'no-cors'
+            };
+            // make API call with parameters and use promises to get response
+            
+            fetch(URL, requestOptions)
+            .then(response => response.json()) // Parse response as JSON
+            .then(data => {
+              // console.log('checkpoint0-----------')
+              update_image_rawdata = 'data:image/jpeg;base64,' + data['body']['genImageRawData']; // Set the global variable with the response data
+              // console.log(update_image_rawdata);
+              update_image.src = update_image_rawdata;
+              update_image.style = "width:300px";
+              preview.innerHTML = '';
+              preview.appendChild(update_image);
+              // You can perform additional actions or update the UI with the response data here
+            })
+            .catch(error => console.log('error', error));
+          }
+    
+    </script>
+  </body>
+</html>
+
+
+
+
+
